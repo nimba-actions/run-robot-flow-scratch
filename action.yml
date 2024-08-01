@@ -1,0 +1,55 @@
+name: "Run Robot Flow - Scratch Org"
+description: "Create an scratch org and run Robot Framework tests"
+inputs:
+  dev-hub-auth-url:
+    type: string
+    required: True
+  org-name:
+    type: string
+    required: True
+  setup-flow:
+    type: string
+    required: True
+  cumulusci-version:
+    description: 'version of CumulusCI to install'
+    required: false
+  sfdx-version:
+    description: 'version of SFDX to install'
+    required: false
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v3
+    - name: Set Up CumulusCI
+      uses: nimba-actions/setup-cumulus@v1
+      with:
+        cumulusci-version: '${{ inputs.cumulusci-version }}'
+        sfdx-version: '${{ inputs.sfdx-version }}'
+    - name: Authorize Dev Hub
+      uses: nimba-actions/authorize-org@v1
+      with:
+        auth-url: '${{ inputs.dev-hub-auth-url }}'
+        org-name: dev-hub
+        dev-hub: true
+    - name: Run Flow
+      uses: nimba-actions/run-flow@v1
+      with:
+        org-name: '${{ inputs.org-name }}'
+        flow-name: '${{ inputs.setup-flow }}'
+    - name: Run Robot Tests
+      uses: nimba-actions/run-task@v1
+      with:
+        org-name: '${{ inputs.org-name }}'
+        task-name: robot
+        options: "-o vars 'BROWSER:headlesschrome,TIMEOUT:180.0' -o exclude unstable"
+    - name: Delete Scratch Org
+      if: ${{ always() }}
+      run: |
+        cci org scratch_delete ${{ inputs.org-name }}
+      shell: bash
+    - name: Store Robot Artifacts
+      uses: actions/upload-artifact@v3
+      if: ${{ always() }}
+      with:
+        name: robot-results
+        path: robot/**/results
