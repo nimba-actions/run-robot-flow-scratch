@@ -16,6 +16,12 @@ inputs:
   sfdx-version:
     description: 'version of SFDX to install'
     required: false
+  debug:
+    description: 'Display debug logs during Flow Execution'
+    required: false
+    default: false
+    type: boolean
+
 runs:
   using: "composite"
   steps:
@@ -42,6 +48,7 @@ runs:
         org-name: '${{ inputs.org-name }}'
         task-name: robot
         options: "-o vars 'BROWSER:headlesschrome,TIMEOUT:180.0' -o exclude unstable"
+        debug: '${{ inputs.debug }}'
     - name: Delete Scratch Org
       if: ${{ always() }}
       run: |
