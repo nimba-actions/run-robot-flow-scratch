@@ -4,6 +4,10 @@ inputs:
   dev-hub-auth-url:
     type: string
     required: True
+  cci-token:
+    description: "Required only if running in a private organization."
+    required: false
+    default: ""
   org-name:
     type: string
     required: True
@@ -40,11 +44,13 @@ runs:
     - name: Run Flow
       uses: nimba-actions/run-flow@v1
       with:
+        cci-token: "${{ inputs.cci-token }}"
         org-name: '${{ inputs.org-name }}'
         flow-name: '${{ inputs.setup-flow }}'
     - name: Run Robot Tests
       uses: nimba-actions/run-task@v1
       with:
+        cci-token: "${{ inputs.cci-token }}"
         org-name: '${{ inputs.org-name }}'
         task-name: robot
         options: "-o vars 'BROWSER:headlesschrome,TIMEOUT:180.0' -o exclude unstable"
@@ -58,5 +64,6 @@ runs:
       uses: actions/upload-artifact@v3
       if: ${{ always() }}
       with:
+        cci-token: "${{ inputs.cci-token }}"
         name: robot-results
         path: robot/**/results
